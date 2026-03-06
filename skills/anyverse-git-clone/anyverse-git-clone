@@ -1,0 +1,37 @@
+**3. 创建 gitlab-clone 脚本：**
+```bash
+#!/bin/bash
+# ~/.openclaw/workspace/skills/gitlab-clone/gitlab-clone
+
+set -e
+
+REPO_URL="$1"
+DEST="${2:-}"
+
+if [ -z "$REPO_URL" ]; then
+    echo "用法：gitlab-clone <repo-url> [destination]"
+    exit 1
+fi
+
+# 检查是否有 GitLab token
+GITLAB_TOKEN=""
+if [ -f ~/.openclaw/workspace/TOOLS.md ]; then
+    GITLAB_TOKEN=$(grep -A1 "### GitLab" ~/.openclaw/workspace/TOOLS.md | grep "token:" | awk '{print $2}')
+fi
+
+# 构建带认证的 URL（如果有 token）
+if [ -n "$GITLAB_TOKEN" ]; then
+    # 将 https:// 替换为 https://oauth2:TOKEN@
+    AUTH_URL=$(echo "$REPO_URL" | sed "s|https://|https://oauth2:${GITLAB_TOKEN}@|")
+else
+    AUTH_URL="$REPO_URL"
+fi
+
+# 执行 clone
+if [ -n "$DEST" ]; then
+    git clone "$AUTH_URL" "$DEST"
+else
+    git clone "$AUTH_URL"
+fi
+
+echo "✅ 克隆完成"
